@@ -288,5 +288,5 @@ print(result_1)
 model2 <- glm(RAUCH~NETTO, family = "binomial", data = data_clean)
 predict(model2, data.frame(NETTO = 2000), type = "response")
 ```
-sxdcfgvbhjnmkl,ö.ä
+
 
