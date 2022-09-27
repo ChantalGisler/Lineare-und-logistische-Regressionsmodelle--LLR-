@@ -1,0 +1,292 @@
+---
+title: "LLR Notebook"
+output: html_notebook
+---
+
+#LLR Aufgaben Serie 1
+
+```{r}
+### Librarys installieren
+#install.packages("tidyverse")
+#install.packages("PerformanceAnalytics")
+#install.packages("ggfortify")
+#install.packages("fastDummies")
+#install.packages("dplyr")
+
+library(tidyverse) # core package includes following packages: tidyr, dplyr, ggplot2, readr, purrr, tibble, stringr, forcats
+library(plotly)
+library("PerformanceAnalytics") #for correlation
+library(broom) # for model quantification
+library(ggfortify) # for visualizing model fits
+library(fastDummies)
+library(dplyr)
+```
+
+## Aufgabe 2
+```{r}
+# Vektoren definieren
+x <- c(-2,-1,3,4,6)
+y <- c(0,0.5,2,2,5)
+```
+
+###Model machen
+```{r}
+# die lineare Regression mit dem Befehl lm machen
+model <- lm(y~x)
+summary(model)
+```
+###Regressionsgerade
+```{r}
+# die Regressionsgerade plotten
+plot(x,y, col = "blue", main = "Plot zu Aufgabe 2", abline(lm(y~x)))
+```
+###Residuen
+```{r}
+hist(rstandard(model))
+hist(residuals(model))
+```
+
+```{r}
+#Residuen anschauen
+res <- resid(model)
+
+plot(fitted(model), res)
+
+#Eine horizontale Linie bei 0 hinzufügen
+abline(0,0)
+```
+## Aufgabe 3
+```{r}
+# Datenset einlesen
+employees <- read.csv2("employees.csv", sep = ",")
+```
+
+```{r}
+# Unbrauchbare Daten herausfiltern. Also diejenigen mit Absenz = 0 sollen raus
+employees_clean <- subset(employees, AbsentHours > 0)
+```
+
+```{r}
+#Die unnötigen Zeilen rausnehmen, damit der Laptop nicht mit allen Daten rechnen muss
+employees_clean <- subset(employees_clean,  select=c(EmployeeNumber, Age, LengthService, AbsentHours))
+```
+
+```{r}
+class(employees_clean$AbsentHours)
+```
+###Age Plots machen
+```{r}
+#Plot mal anschauen
+plot(AbsentHours ~ Age, data = employees_clean)
+```
+
+```{r}
+#Plot mit Regressionsgerade machen
+ggplot(employees_clean, aes(`Age`,`AbsentHours`))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se = FALSE, color = "yellow")
+
+#funktioniert nicht so, wie ich es mir vorgestellt habe...
+```
+
+```{r}
+#FUNKTIONIERT NICHT: Schauen, ob die Absenzen mit dem Alter zusammenhängen
+#linear_alter <- lm(AbsentHours~Age, data = employees_clean)
+#summary(linear_alter)
+```
+
+###Age: Regressionsgerade
+```{r}
+#Da es im oberen Plot nicht so funktioniert, wie ich das möchte, muss ich die Daten von Age und AbsentHours bearbeiten. Sie sind momentan als Character drin. Ich könnte es mal mit as.factor oder as.numeric versuchen, vielleicht klappt es dann. Ich beginne mit as.numeric, weil das im Beispiel von Lucia im Tukeyanscombe auch so drin ist. 
+
+#ablehnung$volkja.proz_n <-as.numeric(ablehnung$volkja.proz)
+ausprobieren <- employees_clean
+ausprobieren$Age <- as.numeric(ausprobieren$Age)
+ausprobieren$AbsentHours <- as.numeric(ausprobieren$AbsentHours)
+ausprobieren$LengthService <- as.numeric(ausprobieren$LengthService)
+
+
+ggplot(ausprobieren, aes(`Age`,`AbsentHours`))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+
+# AS.NUMERIC, es ist AS.NUMERIC!!!!
+```
+
+```{r}
+age_anschauen <- ggplot(ausprobieren, aes(`Age`,`AbsentHours`))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+```
+
+```{r}
+summary(age_anschauen)
+```
+### Age: Modell machen
+```{r}
+model_employees <- lm(Age~AbsentHours, data = ausprobieren)
+summary(model_employees)
+```
+### Age: Residuen
+```{r}
+#Als nächstes muss ich die Residuen anschauen 
+hist(residuals(model_employees))
+```
+
+```{r}
+#Residuen anschauen
+res <- resid(model_employees)
+
+plot(fitted(model_employees), res)
+
+#Eine horizontale Linie bei 0 hinzufügen
+abline(0,0)
+```
+
+```{r}
+#Residuen again
+res <- resid(ausprobieren)
+ggplot(ausprobieren, aes(`Age`,res))+
+  geom_jitter()
+```
+
+### LengthService: Modell machen
+```{r}
+model_length <- lm(LengthService~AbsentHours, data = ausprobieren)
+summary(model_length)
+```
+###LengthService: Plot machen
+```{r}
+#Plot machen
+plot(AbsentHours ~ LengthService, data = ausprobieren)
+```
+###LengthService: Regressionsgerade
+```{r}
+#Plot machen mit Regressionsgerade
+ggplot(ausprobieren, aes(`LengthService`,`AbsentHours`))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+```
+
+###LengthService: Residuen
+```{r}
+#Als nächstes muss ich die Residuen anschauen 
+hist(residuals(model_length))
+```
+
+```{r}
+res <- resid(model_length)
+
+plot(fitted(model_length), res)
+
+#Eine horizontale Linie bei 0 hinzufügen
+abline(0,0)
+```
+
+### a) Alle Daten, die bei 0 liegen, rausnehmen mit >0
+### b) Hier den R Square anschauen. Umso näher bei 1 er ist, desto mehr hängen die Absenzen mit dem Alter oder der LenghtService ab. R Square ist der Abstand der Residuen im Quadrat. Also umso näher er bei 1 ist, desto näher sind die Residuen bei der Regressionsgeraden und desto mehr hängen sie folglich von einander ab. Der R Square von Alter und Absenzen liegt bei 0.64 und der bei der Arbeitsdauer und den Absenzen liegt bei 0.0005. Das heisst also, dass die Anzahl Absenzen eher vom Alter abhängt. 
+### c) ?
+### d) Das sind die Bedingungen für die Resuidenanalyse: 
+      1) Die Residuen haben den Erwartungswert 0, d.h. es sollte keine
+        systematischen Fehler geben im Modell.
+      2) Die Fehler sollten unabhängig voneinander sein.
+      3) Die Fehler sollten normalverteilt sein, was man nicht im TukeyAnscombe-Diagramm prüft, sondern in einem                 Histogramm.
+### e) Siehe b)
+### f) Mein Rat: Wenn die Firma weniger Absenzen möchte, sollte sie jüngere Mitarbeiterinnen und Mitarbeiter einstellen.
+
+## Aufgabe 4
+Lösung: Odds ratio machen
+## Aufgabe 5
+```{r}
+# Datenset einlesen und filtern
+umfragedaten <- read.csv2("Umfragedaten.csv", sep = ",")
+data_clean <- subset(umfragedaten,  select=c(RAUCH, NETTO))
+data_clean <- na.omit(data_clean)
+```
+
+```{r}
+# Ja und Nein bei der Spalte RAUCH zu 0 und 1 machen, 0 = Nein, 1 = Ja
+data_clean$RAUCH[data_clean$RAUCH == "JA"] <- "1"
+data_clean$RAUCH[data_clean$RAUCH == "NEIN"] <- "0"
+```
+
+```{r}
+#Nicht vergessen, 0 und 1 müssen numerisch sein, hier sind sie durch das "" zu Buchstaben oder so geworden
+data_clean$RAUCH <-as.numeric(data_clean$RAUCH)
+#data_clean$NETTO <-as.numeric(data_clean$NETTO)
+```
+
+```{r}
+#den Code richtig zusammenstellen
+data_glm <- glm(
+  RAUCH ~ NETTO, 
+  data = data_clean, 
+  family = binomial)
+```
+
+```{r}
+summary(data_glm)
+```
+
+```{r}
+#Mal eine Grafik plotten
+ggplot(data_clean, aes(NETTO, RAUCH))+
+  geom_point()+
+  geom_smooth(method = "glm", se = FALSE, method.args = list(family = binomial))
+```
+
+```{r}
+#die Grafik ist noch nicht ganz das, was ich möchte. Es muss ja ein S sein. Daher sollte ich das mal mit dem Logarithmus versuchen
+netto_log <- log(data_clean$NETTO, base = exp(1))
+#rauch_log <- log(data_clean$RAUCH, base = exp(1))
+ggplot(data_clean, aes(netto_log, RAUCH))+
+  geom_point()+
+  geom_smooth(method = "glm", se = FALSE, method.args = list(family = binomial))
+```
+
+```{r}
+# Jetzt noch rauszoomen, dann sollte eine schöne S-Kurve zu sehen sein
+netto_log <- log(data_clean$NETTO, base = exp(1))
+ggplot(data_clean, aes(netto_log, RAUCH))+
+  geom_point()+
+  geom_smooth(method = "glm", se = FALSE, method.args = list(family = binomial))+
+  xlim(-10, 40)+
+  ylim(-0.2, 1.2)
+```
+
+```{r}
+### Jetzt kommt das mit der prediction
+linear_model <- glm(RAUCH~NETTO, data = data_clean, family = "binomial")
+explanatory_data <- tibble("data_clean$RAUCH" = seq(-1,6,0.25))
+prediction_data <- explanatory_data %>%
+  mutate(RAUCH = predict(linear_model, explanatory_data, type = "response"))
+```
+
+```{r}
+#Versuche jetzt herauszufinden, wie hoch die Wahrscheinlichkeit ist, dass jemand, der 2000.- verdient, Raucher ist. 
+relation <- lm(RAUCH~NETTO, data = data_clean)
+
+a <- data.frame(NETTO=2000)
+result <- predict(relation, a)
+print(result)
+```
+
+```{r}
+#Nicht ganz, aber fast. Ich vermute, dass NETTO hier nicht logarithmisch ist und deshalb ein falsches Resultat dabei raus kommt. Aber ich finde, ich bin verdammt nah dran. 
+
+data_mit_nettolog <- data_clean
+data_mit_nettolog$NETTO <- log(data_mit_nettolog$NETTO, base = exp(1))
+relation_1 <- lm(RAUCH~NETTO, data = data_mit_nettolog)
+b <- data.frame(NETTO = 2000)
+result_1 <- predict(relation_1, b)
+print(result_1)
+#hmmm.... Vielleicht sieht R das als lineare und nicht als logistische Regression. 
+```
+
+```{r}
+#nächster Versuch
+model2 <- glm(RAUCH~NETTO, family = "binomial", data = data_clean)
+predict(model2, data.frame(NETTO = 2000), type = "response")
+```
+sxdcfgvbhjnmkl,ö.ä
+
