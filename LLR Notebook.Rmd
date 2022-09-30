@@ -253,6 +253,30 @@ ggplot(data_clean, aes(netto_log, RAUCH))+
   xlim(-10, 40)+
   ylim(-0.2, 1.2)
 ```
+```{r}
+#Verbesserung von Lucia:
+##Man kann z.B. so Punkte zwischen -10 und 40 für die x-Achse definieren:
+#mehr Datenpunkte definieren:
+netto_log <- data.frame(NETTO=-10:40)
+
+#kuerzere Variablennamen, damit ich weniger tippen muss
+xx <- log(data_clean$NETTO, base = exp(1))
+yy <- data_clean$RAUCH
+
+#Modell, welches direkt mit log berechnet wird
+data_glm2 <- glm(yy ~ xx, family = binomial)
+summary(data_glm2)
+
+#Danach kann man aus dem berechneten Modell die Steigung und das Intercept nehmen und direkt die S-Kurve mit den vorgegebenen x-Werten berechnen.
+steigung = data_glm2[["coefficients"]][["xx"]]
+intercept = data_glm2[["coefficients"]][["(Intercept)"]]
+pi <- exp(intercept+steigung*netto_log$NETTO) / (1+exp(intercept+steigung*netto_log$NETTO))
+
+#plot der Originaldaten und der S-Kurve
+plot(xx,data_clean$RAUCH, xlim=c(-10, 40))
+lines(netto_log$NETTO,pi)
+
+```
 
 ```{r}
 ### Jetzt kommt das mit der prediction
@@ -292,5 +316,17 @@ predict(model2, data.frame(NETTO = 2000), type = "response")
 ## Aufgabe 6
 ```{r}
 #Daten einlesen
+voice <- read.csv2("voice.csv", sep = ",")
+```
+### a)Bestimmen Sie, welche der drei obigen Variablen am besten zur Klassifikation weiblich/männlich geeignet ist:
+
+```{r}
+#meanfreq: mean frequency (in kHz)
+#• median: median frequency (in kHz)
+#• meanfun: average fundamental frequency measured across acoustic signa
+#Mein Lösungsansatz: Zunächst männlich und weiblich zu 1 und 0 ändern, dann eine logistische Regression machen und anhand von R-Square herausfinden, was am meisten zusammenhängt. 1 = Mann und 0 = Frau
+
+
+
 ```
 
