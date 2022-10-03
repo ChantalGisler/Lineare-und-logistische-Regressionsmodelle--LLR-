@@ -20,6 +20,7 @@ library(broom) # for model quantification
 library(ggfortify) # for visualizing model fits
 library(fastDummies)
 library(dplyr)
+library(ggplot2)
 ```
 
 ## Aufgabe 2
@@ -183,6 +184,10 @@ plot(fitted(model_length), res)
 abline(0,0)
 ```
 
+```{r}
+
+```
+
 ### a) Alle Daten, die bei 0 liegen, rausnehmen mit >0
 ### b) Hier den R Square anschauen. Umso näher bei 1 er ist, desto mehr hängen die Absenzen mit dem Alter oder der LenghtService ab. R Square ist der Abstand der Residuen im Quadrat. Also umso näher er bei 1 ist, desto näher sind die Residuen bei der Regressionsgeraden und desto mehr hängen sie folglich von einander ab. Der R Square von Alter und Absenzen liegt bei 0.64 und der bei der Arbeitsdauer und den Absenzen liegt bei 0.0005. Das heisst also, dass die Anzahl Absenzen eher vom Alter abhängt. 
 ### c) ?
@@ -253,8 +258,8 @@ ggplot(data_clean, aes(netto_log, RAUCH))+
   xlim(-10, 40)+
   ylim(-0.2, 1.2)
 ```
+###Verbesserung von Lucia:
 ```{r}
-#Verbesserung von Lucia:
 ##Man kann z.B. so Punkte zwischen -10 und 40 für die x-Achse definieren:
 #mehr Datenpunkte definieren:
 netto_log <- data.frame(NETTO=-10:40)
@@ -266,7 +271,10 @@ yy <- data_clean$RAUCH
 #Modell, welches direkt mit log berechnet wird
 data_glm2 <- glm(yy ~ xx, family = binomial)
 summary(data_glm2)
+```
 
+
+```{r}
 #Danach kann man aus dem berechneten Modell die Steigung und das Intercept nehmen und direkt die S-Kurve mit den vorgegebenen x-Werten berechnen.
 steigung = data_glm2[["coefficients"]][["xx"]]
 intercept = data_glm2[["coefficients"]][["(Intercept)"]]
@@ -318,7 +326,7 @@ predict(model2, data.frame(NETTO = 2000), type = "response")
 #Daten einlesen
 voice <- read.csv2("voice.csv", sep = ",")
 ```
-### a)Bestimmen Sie, welche der drei obigen Variablen am besten zur Klassifikation weiblich/männlich geeignet ist:
+### a) Bestimmen Sie, welche der drei obigen Variablen am besten zur Klassifikation weiblich/männlich geeignet ist:
 
 ```{r}
 #meanfreq: mean frequency (in kHz)
@@ -326,7 +334,86 @@ voice <- read.csv2("voice.csv", sep = ",")
 #• meanfun: average fundamental frequency measured across acoustic signa
 #Mein Lösungsansatz: Zunächst männlich und weiblich zu 1 und 0 ändern, dann eine logistische Regression machen und anhand von R-Square herausfinden, was am meisten zusammenhängt. 1 = Mann und 0 = Frau
 
+#Zunächst werde ich die unnötigen Daten herausfiltern, sodass ich nur noch Geschlecht, mean frequency, median frequency und average fundamental frequency habe. 
 
+voice_clean <- subset(voice,  select=c(meanfreq, label, median, meanfun))
+```
+
+```{r}
+#Geschlecht in Zahlen ändern, männlich = 1 und weiblich = 0
+voice_clean$label[voice_clean$label == "male"] <- "1"
+voice_clean$label[voice_clean$label == "female"] <- "0"
+```
+
+```{r}
+#Kurz schauen, ob es nummerisch ist
+class(voice_clean$label)
+```
+
+```{r}
+#Nicht vergessen, 0 und 1 müssen numerisch sein, hier sind sie durch das "" zu Buchstaben oder so geworden
+voice_clean$label <-as.numeric(voice_clean$label)
+voice_clean$meanfreq <- as.numeric(voice_clean$meanfreq)
+```
+
+```{r}
+#Kurz schauen, ob es jetzt nummerisch ist
+class(voice_clean$label)
+```
+```{r}
+#Plot mit meanfreq anschauen
+plot(label ~ meanfreq, data = voice_clean)
+#Man sieht, dass Männer generell eine tiefere meanfreq (mittlere Frequenz der Stimme haben). Auch sieht man einen grossen Überlapp, sodass wir uns schon denken koennen, dass ein logistisches Modell Mühe haben koennte.
+
+```
+```{r}
+#die x-Achse sortieren, damit nicht die Regressionsgerade nicht hin und her springt
+order_voice <- voice_clean[order(voice_clean$meanfreq),]
+
+freq <- log(order_voice$meanfreq, base = exp(1))
+label <- order_voice$label
+
+
+#Modell, welches direkt mit log berechnet wird
+meanfreq_glm <- glm(label ~ freq, family = binomial)
+summary(meanfreq_glm)
+
+#Danach kann man aus dem berechneten Modell die Steigung und das Intercept nehmen und direkt die S-Kurve mit den vorgegebenen x-Werten berechnen.
+steigung_freq = meanfreq_glm[["coefficients"]][["freq"]]
+intercept_freq = meanfreq_glm[["coefficients"]][["(Intercept)"]]
+freq_pi <- exp(intercept_freq+steigung_freq*freq) / (1+exp(intercept_freq+steigung_freq*freq))
+
+#plot der Originaldaten und der S-Kurve
+plot(freq,order_voice$label)
+lines(freq, freq_pi)
+```
+
+```{r}
+#Jetzt mit ggplot:
+
+#die x-Achse sortieren, damit nicht die Regressionsgerade nicht hin und her springt
+order_voice <- voice_clean[order(voice_clean$meanfreq),]
+
+freq <- log(order_voice$meanfreq, base = exp(1))
+label <- order_voice$label
+
+
+#Modell, welches direkt mit log berechnet wird
+meanfreq_glm <- glm(label ~ freq, family = binomial)
+summary(meanfreq_glm)
+
+#Danach kann man aus dem berechneten Modell die Steigung und das Intercept nehmen und direkt die S-Kurve mit den vorgegebenen x-Werten berechnen.
+steigung_freq = meanfreq_glm[["coefficients"]][["freq"]]
+intercept_freq = meanfreq_glm[["coefficients"]][["(Intercept)"]]
+freq_pi <- exp(intercept_freq+steigung_freq*freq) / (1+exp(intercept_freq+steigung_freq*freq))
+
+#plot der Originaldaten und der S-Kurve
+ggplot(meanfreq_glm, aes(freq, label))+
+  geom_point()+
+  geom_smooth(method = "glm", se = FALSE, method.args = list(family = binomial))
+```
+
+```{r}
 
 ```
 
