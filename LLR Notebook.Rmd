@@ -100,7 +100,6 @@ ggplot(employees_clean, aes(`Age`,`AbsentHours`))+
 ```{r}
 #Da es im oberen Plot nicht so funktioniert, wie ich das möchte, muss ich die Daten von Age und AbsentHours bearbeiten. Sie sind momentan als Character drin. Ich könnte es mal mit as.factor oder as.numeric versuchen, vielleicht klappt es dann. Ich beginne mit as.numeric, weil das im Beispiel von Lucia im Tukeyanscombe auch so drin ist. 
 
-#ablehnung$volkja.proz_n <-as.numeric(ablehnung$volkja.proz)
 ausprobieren <- employees_clean
 ausprobieren$Age <- as.numeric(ausprobieren$Age)
 ausprobieren$AbsentHours <- as.numeric(ausprobieren$AbsentHours)
@@ -472,6 +471,24 @@ b. Fit a straight line to the data points. Give the estimated parameter values.
 c. Add the model in the scatter diagram. Comment on the solution.
 d. Does the data support the hypothesis that Venice sinks?
 ```{r}
+#Daten einlesen
+venice <- read.csv2("venice.csv", header=TRUE, sep = ",")
+```
+###a) Represent the data in a scatter diagram sea level versus year and describe the functional
+```{r}
+plot(SeaLevel ~ Year, data = venice)
+#Es könnte ein leichter Zusammenhang zwischen den Jahren und dem Meeresspiegel bestehen. Die lineare Funktion steigt leicht, also könnte es sein, dass Venedig leicht untergeht. 
+```
+###b) Fit a straight line to the data points. Give the estimated parameter values.
+```{r}
+ggplot(venice, aes(`Year`,`SeaLevel`))+
+  geom_jitter()+
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+```
 
+```{r}
+model_venice <- lm(SeaLevel~Year, data = venice)
+summary(model_venice)
+#die Parameter lauten y=-989.3822x + 0.5670
 ```
 
