@@ -489,6 +489,6 @@ ggplot(venice, aes(`Year`,`SeaLevel`))+
 ```{r}
 model_venice <- lm(SeaLevel~Year, data = venice)
 summary(model_venice)
-#die Parameter lauten y=-989.3822x + 0.5670
+#die Parameter lauten y=0.5670x -989.3822
 ```
 
