@@ -184,10 +184,6 @@ plot(fitted(model_length), res)
 abline(0,0)
 ```
 
-```{r}
-
-```
-
 ### a) Alle Daten, die bei 0 liegen, rausnehmen mit >0
 ### b) Hier den R Square anschauen. Umso näher bei 1 er ist, desto mehr hängen die Absenzen mit dem Alter oder der LenghtService ab. R Square ist der Abstand der Residuen im Quadrat. Also umso näher er bei 1 ist, desto näher sind die Residuen bei der Regressionsgeraden und desto mehr hängen sie folglich von einander ab. Der R Square von Alter und Absenzen liegt bei 0.64 und der bei der Arbeitsdauer und den Absenzen liegt bei 0.0005. Das heisst also, dass die Anzahl Absenzen eher vom Alter abhängt. 
 ### c) ?
@@ -301,24 +297,8 @@ relation <- lm(RAUCH~NETTO, data = data_clean)
 a <- data.frame(NETTO=2000)
 result <- predict(relation, a)
 print(result)
-```
 
-```{r}
-#Nicht ganz, aber fast. Ich vermute, dass NETTO hier nicht logarithmisch ist und deshalb ein falsches Resultat dabei raus kommt. Aber ich finde, ich bin verdammt nah dran. 
-
-data_mit_nettolog <- data_clean
-data_mit_nettolog$NETTO <- log(data_mit_nettolog$NETTO, base = exp(1))
-relation_1 <- lm(RAUCH~NETTO, data = data_mit_nettolog)
-b <- data.frame(NETTO = 2000)
-result_1 <- predict(relation_1, b)
-print(result_1)
-#hmmm.... Vielleicht sieht R das als lineare und nicht als logistische Regression. 
-```
-
-```{r}
-#nächster Versuch
-model2 <- glm(RAUCH~NETTO, family = "binomial", data = data_clean)
-predict(model2, data.frame(NETTO = 2000), type = "response")
+#Das Resultat 0.2955645 also 29.55 Prozent stimmt. Python berechnet das anders als R und Lucia weiss nicht genau, welche Werte da ausgelassen worden sind oder was genau der Grund für die andere Lösung ist. Aber immerhin: Es stimmt. Yay!
 ```
 
 ## Aufgabe 6
@@ -413,6 +393,84 @@ ggplot(meanfreq_glm, aes(freq, label))+
   geom_smooth(method = "glm", se = FALSE, method.args = list(family = binomial))
 ```
 
+```{r}
+##Man kann z.B. so Punkte zwischen -10 und 40 für die x-Achse definieren:
+#mehr Datenpunkte definieren:
+freq_log <- data.frame(meanfreq=-10:10)
+
+#kuerzere Variablennamen, damit ich weniger tippen muss
+x_freq <- log(order_voice$meanfreq, base = exp(1))
+y_label <- order_voice$label
+
+#Modell, welches direkt mit log berechnet wird
+meanfreq_glm <- glm(y_label ~ x_freq, family = binomial)
+summary(meanfreq_glm)
+
+#Danach kann man aus dem berechneten Modell die Steigung und das Intercept nehmen und direkt die S-Kurve mit den vorgegebenen x-Werten berechnen.
+steigung_freq = meanfreq_glm[["coefficients"]][["x_freq"]]
+intercept_freq = meanfreq_glm[["coefficients"]][["(Intercept)"]]
+freq_pi <- exp(intercept_freq+steigung_freq*x_freq) / (1+exp(intercept_freq+steigung_freq*x_freq))
+
+#plot der Originaldaten und der S-Kurve
+ggplot(meanfreq_glm, aes(x_freq, y_label))+
+  geom_point()+
+  geom_smooth(method = "glm", se = FALSE, method.args = list(family = binomial), xlim=c(-10, 10))
+```
+
+```{r}
+#Und jetzt das gleiche auch noch mit den anderen zwei Variablen machen
+```
+## Aufgabe von Anna: 
+Basierend auf folgendem Datensatz und zusammenfassender Statistik:
+x 6 9 12 15 18 25
+y 20 18 10 8 9 4
+Mittelwert x = 14:17, Standardabweichung x = 6:79
+Mittelwert y = 11:50, Standardabweichung y = 6:19
+Korrelation r = −0:920
+1 Was ist die Steigung der geschätzten Regressionsgleichung?
+2 Was ist der y-Achsenabschnitt der geschätzten Regressionsgleichung?
+3 Was ist der vorhergesagte Wert von y, wenn x 25 ist?
+4 Was ist sein Residuum?
+```{r}
+#1. Was ist die Steigung der geschätzten Regressionsgleichung?
+#2. Was ist der y-Achsenabschnitt der geschätzten Regressionsgleichung?
+xA <- c(6,9,12,15,18,25)
+yA <- c(20,18,10,8,9,4)
+
+modelA <- lm(yA ~ xA)
+summary(modelA)
+
+#1. die Steigung ist -0.8383
+#2. der y-Achsenabschnitt ist 23.3755
+```
+```{r}
+#Was ist der vorhergesagte Wert von y, wenn x 25 ist?
+relationA <- lm(yA~xA)
+
+aA <- data.frame(xA=25)
+result <- predict(relationA, aA)
+print(result)
+
+#das Resultat ist 2.418773
+```
+
+```{r}
+#4 Was ist sein Residuum?
+res <- resid(modelA, xA=25)
+
+print(res)
+#die erste Lösung stimmt, 1.6541516
+```
+#Aufgaben aus dem Marcel Steiner Skript
+
+## Problem 7.5.1 (Venice Sea Level, cf. [8], Example 5.1). The annual maximum sea levels
+[in cm] in Venice, 1931-1981 have been recorded by P. A. Pirazzoli. The data set venice.dat
+contains the annual maximum tides at Venice for the 51 years.
+a. Represent the data in a scatter diagram sea level versus year and describe the functional
+context in words.
+b. Fit a straight line to the data points. Give the estimated parameter values.
+c. Add the model in the scatter diagram. Comment on the solution.
+d. Does the data support the hypothesis that Venice sinks?
 ```{r}
 
 ```
